@@ -1,87 +1,8 @@
 import pandas as pd
 import os
+from scheduler import build_candidate_from_df, find_best_assignment, drop_teacher
 
 SUBJECT_FILES = ["data/BACSE104.csv", "data/BACSE105.csv", "data/BACSE106.csv"]
-
-def split_slot_str(slot):
-    slots = [p for p in slot.split("+") if p != ""]
-    return set(slots)
-
-def build_candidate_from_df(df):
-    candidates = []
-
-    df_sorted = df.copy()
-    df_sorted['Preference'] = pd.to_numeric(df_sorted['Preference'], errors='coerce').fillna(9999).astype(int)
-    df_sorted = df_sorted.sort_values(['Preference'])
-
-    grouped = {}
-
-    for _, row in df_sorted.iterrows():
-        key = (row.get("Name", ""), int(row.get("Preference", 9999)))
-        grouped.setdefault(key, []).append(row)
-
-    for (name, pref), rows in grouped.items():
-        if len(rows) < 2:
-            r1 = rows[0]
-
-            theory_raw = r1["Slot"]
-            lab_raw = r1["Slot"]
-
-            venues = {r1["Venue"]}
-        else:
-            r1 = rows[0]
-            r2  =rows[1]
-
-            theory_raw = r1["Slot"]
-            lab_raw = r2["Slot"]
-
-            venues = {r1["Venue"], r2["Venue"]}
-
-        cand = {
-            "name" : name,
-            "preference" : int(pref),
-            "theory_raw" : str(theory_raw),
-            "lab_raw" : str(lab_raw),
-            "theory_slots" : split_slot_str(theory_raw),
-            "lab_slots" : split_slot_str(lab_raw),
-            "venues" : venues
-        }
-
-        candidates.append(cand)
-
-    return candidates
-
-def find_best_assignment(subject_candidates):
-    n = len(subject_candidates)
-    best = {"score" : float("inf"), "assignment" : None}
-    used_slots_global = set()
-
-    order = sorted(range(n), key = lambda x: len(subject_candidates[x][1]) if subject_candidates[x][1] else 0)
-
-    def backtrack(idx, used_slots, current_score, current_assignment):
-        if current_score >= best["score"]:
-            return
-
-        if idx == n:
-            best["score"] = current_score
-            best["assignment"] = list(current_assignment)
-            return
-
-        subject_index = order[idx]
-        subject_name, candidates = subject_candidates[subject_index]
-
-        for cand in candidates:
-            cand_slots = cand["theory_slots"] | cand["lab_slots"]
-
-            if used_slots & cand_slots:
-                continue
-
-            current_assignment.append((subject_name, cand))
-            backtrack(idx + 1, used_slots | cand_slots, current_score + cand["preference"], current_assignment)
-            current_assignment.pop()
-
-    backtrack(0, set(), 0, [])
-    return best
 
 def main():
     subjects_candidates = []
@@ -95,23 +16,25 @@ def main():
         cands = sorted(cands, key = lambda x: x["preference"])
         subjects_candidates.append((subject_label, cands))
 
-    best = find_best_assignment(subjects_candidates)
-
-    if best["assignment"] is None:
-        print("No feasible arrangement")
-        return
-
-    rows = []
-    for subject_name, cands in best["assignment"]:
-        rows.append({
-            "Subject" : subject_name,
-            "Teacher" : cands["name"],
-            "Preference" : cands["preference"],
-            "TheorySlot" : cands["theory_raw"],
-            "LabSlot" : cands["lab_raw"]
-            })
-    result_df = pd.DataFrame(rows)
-    print(result_df)
+    result_df = find_best_assignment(subjects_candidates)
+    
+    print("Welcome to FFCS Helper")
+    print("Press V to view current timetable")
+    print("Press E to exit")
+    print("---------------------------------")    
+    
+    running = True
+    while running:   
+        i = input().upper()
+        if i == "Q":
+            running = False
+        elif i == "V":
+            print(result_df)
+        elif i == "D":
+            name = input("Enter name of teacher to drop: ")
+            subjects_candidates = drop_teacher(subjects_candidates, name)
+            result_df = find_best_assignment(subjects_candidates)
+            print(result_df)
  
 if __name__ == "__main__":
     main()
