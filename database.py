@@ -19,7 +19,7 @@ def get_subject_list():
     return lst
 
 def add_subject(code):
-    query = "CREATE TABLE IF NOT EXISTS " + code + " (Preference INT PRIMARY KEY, TheorySlot VARCHAR(50), LabSlot VARCHAR(50), Name VARCHAR(50), TheoryVenue VARCHAR(50), LabVenue VARCHAR(50))"#
+    query = "CREATE TABLE IF NOT EXISTS " + code + " (Preference INT PRIMARY KEY, TheorySlot VARCHAR(50), LabSlot VARCHAR(50), Name VARCHAR(50), TheoryVenue VARCHAR(50), LabVenue VARCHAR(50))"
     cursor.execute(query)
 
     trs_list = pd.read_csv("data/"+code+"_list.csv")
@@ -87,16 +87,55 @@ def load_subjects_candidates():
     subjects_candidates = []
     
     for i in SUBJECTS_LIST:
-        query = "SELECT * FROM " + i
+        if i != "timetable":
+            query = "SELECT * FROM " + i
+            cursor.execute(query)
+
+            rows = cursor.fetchall()
+            columns = cursor.column_names
+
+            df = pd.DataFrame(rows, columns=columns)
+            cands = build_candidate_from_df(df)
+            cands = sorted(cands, key = lambda x : x["preference"])
+
+            subjects_candidates.append((i.upper(), cands))
+
+    return subjects_candidates
+
+def stow_timetable(timetable_df):
+    query = "DROP TABLE IF EXISTS timetable"
+    cursor.execute(query)
+    conn.commit()
+    query = "CREATE TABLE timetable (Subject VARCHAR(50) PRIMARY KEY,Preference INT, TheorySlot VARCHAR(50), LabSlot VARCHAR(50), Teacher VARCHAR(50), TheoryVenue VARCHAR(50), LabVenue VARCHAR(50))"
+    cursor.execute(query)
+    conn.commit()
+    insert_query = "INSERT INTO timetable (Subject, Preference, TheorySlot, LabSlot, Teacher, TheoryVenue, LabVenue) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+
+    data_to_insert = [
+        (
+            row["Subject"],
+            int(row["Preference"]),
+            row["TheorySlot"],
+            row["LabSlot"],
+            row["Teacher"],
+            row["TheoryVenue"],
+            row["LabVenue"]
+        )
+        for _, row in timetable_df.iterrows()
+    ]
+
+    cursor.executemany(insert_query, data_to_insert)
+    conn.commit()
+
+def retrieve_timetable():
+    SUBJECTS_LIST = get_subject_list()
+    if "timetable" in SUBJECTS_LIST:
+        query = "SELECT * FROM timetable"
         cursor.execute(query)
 
         rows = cursor.fetchall()
         columns = cursor.column_names
 
         df = pd.DataFrame(rows, columns=columns)
-        cands = build_candidate_from_df(df)
-        cands = sorted(cands, key = lambda x : x["preference"])
-
-        subjects_candidates.append((i.upper(), cands))
-
-    return subjects_candidates
+        return df
+    return None

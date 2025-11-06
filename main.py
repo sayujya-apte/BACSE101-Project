@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 from scheduler import build_candidate_from_df, find_best_assignment, drop_teacher, cnf_teacher
-from database import add_subject, drop_subject, get_subject_list, load_subjects_candidates
+from database import add_subject, drop_subject, get_subject_list, load_subjects_candidates, stow_timetable, retrieve_timetable
 
 def welcome():
     os.system("cls")
@@ -17,7 +17,10 @@ def welcome():
 def main():
     subjects_candidates = load_subjects_candidates()
 
-    result_df = find_best_assignment(subjects_candidates)
+    if retrieve_timetable() is not None:
+        result_df = retrieve_timetable()
+    else:
+        result_df = find_best_assignment(subjects_candidates)
     
     welcome()
 
@@ -26,6 +29,7 @@ def main():
         print("---------------------------------")
         i = input("# ").upper()
         if i == "Q":
+            stow_timetable(result_df)
             running = False
         elif i == "V":
             print(result_df)
