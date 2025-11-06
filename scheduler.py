@@ -32,8 +32,6 @@ def build_candidate_from_df(df):
             theory_raw = r1["Slot"]
             lab_raw = r2["Slot"]
 
-            venues = {r1["Venue"], r2["Venue"]}
-
         cand = {
             "name" : name,
             "preference" : int(pref),
@@ -41,7 +39,8 @@ def build_candidate_from_df(df):
             "lab_raw" : str(lab_raw),
             "theory_slots" : split_slot_str(theory_raw),
             "lab_slots" : split_slot_str(lab_raw),
-            "venues" : venues
+            "theory_venue" : r1["Venue"],
+            "lab_venue" : r2["Venue"]
         }
 
         candidates.append(cand)
@@ -90,7 +89,9 @@ def find_best_assignment(subject_candidates):
             "Teacher" : cands["name"],
             "Preference" : cands["preference"],
             "TheorySlot" : cands["theory_raw"],
-            "LabSlot" : cands["lab_raw"]
+            "LabSlot" : cands["lab_raw"],
+            "TheoryVenue" : cands["theory_venue"],
+            "LabVenue" : cands["lab_venue"]
             })
     result_df = pd.DataFrame(rows)
 
