@@ -96,10 +96,24 @@ def find_best_assignment(subject_candidates):
 
     return result_df
 
-def drop_teacher(subjects_candidates, name):
+def drop_teacher(subjects_candidates, subject, name):
     updated = []
-    for subject, cand in subjects_candidates:
-        filtered = [c for c in cand if c["name"].upper() != name.upper()]
-        updated.append((subject, filtered))
+    for sub, cand in subjects_candidates:
+        if sub == subject:
+            filtered = [c for c in cand if c["name"].upper() != name.upper()]
+            updated.append((sub, filtered))
+        else:
+            updated.append((sub, cand))
+
+    return updated
+
+def cnf_teacher(subjects_candidates, subject, name):
+    updated = []
+    for sub, cand in subjects_candidates:
+        if sub == subject:
+            filtered = [c for c in cand if c["name"].upper() == name.upper()]
+            updated.append((sub, filtered))
+        else:
+            updated.append((sub, cand))
 
     return updated
