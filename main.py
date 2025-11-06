@@ -1,23 +1,11 @@
 import pandas as pd
 import os
+
 from scheduler import build_candidate_from_df, find_best_assignment, drop_teacher, cnf_teacher
+from database import add_subject, drop_subject, get_subject_list, load_subjects_candidates
 
-SUBJECT_FILES = ["data/BACSE104.csv", "data/BACSE105.csv", "data/BACSE106.csv"]
-
-def main():
-    subjects_candidates = []
-
-    for i in SUBJECT_FILES:
-        df = pd.read_csv(i)
-        
-        subject_label = i[5:13]
-
-        cands = build_candidate_from_df(df)
-        cands = sorted(cands, key = lambda x: x["preference"])
-        subjects_candidates.append((subject_label, cands))
-
-    result_df = find_best_assignment(subjects_candidates)
-    
+def welcome():
+    os.system("cls")
     print("---------------------------------")
     print("Welcome to FFCS Helper")
     print("---------------------------------")
@@ -25,6 +13,13 @@ def main():
     print("Press C to confirm a teacher")
     print("Press D to drop a teacher")
     print("Press E to exit")
+
+def main():
+    subjects_candidates = load_subjects_candidates()
+
+    result_df = find_best_assignment(subjects_candidates)
+    
+    welcome()
 
     running = True
     while running:   
@@ -46,6 +41,20 @@ def main():
             subjects_candidates = cnf_teacher(subjects_candidates, subject, name)
             result_df = find_best_assignment(subjects_candidates)
             print(result_df)
+        elif i == "AS":
+            code = input("Enter the subject code")
+            add_subject(code)
+        elif i == "DS":
+            code = input("Enter the subject code")
+            drop_subject(code)
+        elif i == "LS":
+            print(get_subject_list())
+        elif i == "RS":
+            subjects_candidates = load_subjects_candidates()
+            result_df = find_best_assignment(subjects_candidates)
+            print(result_df)
+        elif i == "CLS":
+            welcome()
         else:
             print("Please enter valid input!")
  

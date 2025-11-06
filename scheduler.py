@@ -18,9 +18,11 @@ def build_candidate_from_df(df):
         grouped.setdefault(key, []).append(row)
 
     for (name, pref), rows in grouped.items():
+        theory_raw = rows[0]["TheorySlot"]
+        lab_raw = rows[0]["LabSlot"]
+        '''
         if len(rows) < 2:
             r1 = rows[0]
-
             theory_raw = r1["Slot"]
             lab_raw = r1["Slot"]
 
@@ -31,7 +33,7 @@ def build_candidate_from_df(df):
 
             theory_raw = r1["Slot"]
             lab_raw = r2["Slot"]
-
+        '''
         cand = {
             "name" : name,
             "preference" : int(pref),
@@ -39,8 +41,8 @@ def build_candidate_from_df(df):
             "lab_raw" : str(lab_raw),
             "theory_slots" : split_slot_str(theory_raw),
             "lab_slots" : split_slot_str(lab_raw),
-            "theory_venue" : r1["Venue"],
-            "lab_venue" : r2["Venue"]
+            "theory_venue" : rows[0]["TheoryVenue"],
+            "lab_venue" : rows[0]["LabVenue"]
         }
 
         candidates.append(cand)
