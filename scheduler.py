@@ -88,8 +88,8 @@ def find_best_assignment(subject_candidates):
     for subject_name, cands in best["assignment"]:
         rows.append({
             "Subject" : subject_name,
-            "Teacher" : cands["name"],
             "Preference" : cands["preference"],
+            "Teacher" : cands["name"],
             "TheorySlot" : cands["theory_raw"],
             "LabSlot" : cands["lab_raw"],
             "TheoryVenue" : cands["theory_venue"],
